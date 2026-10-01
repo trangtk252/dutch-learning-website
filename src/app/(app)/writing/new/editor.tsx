@@ -19,6 +19,7 @@ export function WritingEditor({ promptId, minWords, maxWords }: { promptId?: str
   useEffect(() => {
     try {
       const saved = localStorage.getItem(DRAFT_KEY(promptId));
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restore the draft from browser storage after hydration
       if (saved) setText(saved);
     } catch {}
   }, [promptId]);

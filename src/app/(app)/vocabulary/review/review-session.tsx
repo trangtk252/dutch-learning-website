@@ -45,8 +45,8 @@ export function ReviewSession({ cards, newCount }: { cards: ReviewCard[]; newCou
   const [done, setDone] = useState(0);
   const [again, setAgain] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const shownAt = useRef(Date.now());
-  const startedAt = useRef(Date.now());
+  const shownAt = useRef(0);
+  const startedAt = useRef(0);
   const finished = useRef(false);
 
   const card = queue[0];
@@ -60,6 +60,7 @@ export function ReviewSession({ cards, newCount }: { cards: ReviewCard[]; newCou
 
   useEffect(() => {
     shownAt.current = Date.now();
+    if (!startedAt.current) startedAt.current = Date.now();
   }, [card?.id, card?.srs.reps]);
 
   useEffect(() => {

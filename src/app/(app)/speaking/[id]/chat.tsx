@@ -10,6 +10,7 @@ import { SpeakButton } from "@/components/voice/speak-button";
 import { useVoice } from "@/components/voice/voice-context";
 import { ERROR_CATEGORY_LABELS, type ErrorCategoryKey } from "@/lib/constants";
 import { cn } from "@/lib/cn";
+import { useIsClient } from "@/lib/use-is-client";
 import { finishConversationAction, sendMessageAction, type ChatMessageDTO } from "../actions";
 
 export function Chat({
@@ -30,7 +31,6 @@ export function Chat({
   const [interim, setInterim] = useState("");
   const [listening, setListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
-  const [voiceAvailable, setVoiceAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newWords, setNewWords] = useState<{ dutch: string; english: string }[]>([]);
   const [sending, startSending] = useTransition();
@@ -38,7 +38,8 @@ export function Chat({
   const bottom = useRef<HTMLDivElement>(null);
   const spokeFirst = useRef(false);
 
-  useEffect(() => setVoiceAvailable(stt.available), [stt]);
+  const isClient = useIsClient();
+  const voiceAvailable = isClient && stt.available;
   useEffect(() => bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" }), [messages.length, sending]);
   useEffect(() => {
     // Read the tutor's opening line aloud once.

@@ -5,6 +5,17 @@ import { normalizeWord, tokenize } from "@/lib/dutch/text";
 import { cn } from "@/lib/cn";
 import { WordPopover, type PopoverTarget, type SaveContext } from "./word-popover";
 
+function indexTokens(text: string) {
+  const out: (ReturnType<typeof tokenize>[number] & { offset: number; wordIndex: number })[] = [];
+  let offset = 0;
+  let wordIndex = 0;
+  for (const t of tokenize(text)) {
+    out.push({ ...t, offset, wordIndex: t.isWord ? wordIndex++ : -1 });
+    offset += t.text.length;
+  }
+  return out;
+}
+
 function sentenceAround(text: string, offset: number) {
   const start = Math.max(text.lastIndexOf(". ", offset), text.lastIndexOf("? ", offset), text.lastIndexOf("! ", offset), text.lastIndexOf("\n", offset));
   const ends = [". ", "? ", "! ", "\n"].map((p) => text.indexOf(p, offset)).filter((i) => i >= 0);
@@ -37,15 +48,7 @@ export function ClickableText({
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  const tokens = useMemo(() => {
-    let offset = 0;
-    let wordIndex = 0;
-    return tokenize(text).map((t) => {
-      const tok = { ...t, offset, wordIndex: t.isWord ? wordIndex++ : -1 };
-      offset += t.text.length;
-      return tok;
-    });
-  }, [text]);
+  const tokens = useMemo(() => indexTokens(text), [text]);
   const wordCount = tokens.filter((t) => t.isWord).length;
 
   const open = useCallback(

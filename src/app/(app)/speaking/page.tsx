@@ -6,7 +6,6 @@ import { purgeExpiredTranscripts } from "@/lib/server/retention";
 import { CEFR_LEVELS, SCENARIOS, SCENARIO_INFO } from "@/lib/constants";
 import { Badge, LevelBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Label, Select } from "@/components/ui/form";
 import { EmptyState, PageHeader, SectionTitle } from "@/components/ui/page-header";
 import { startConversationAction } from "./actions";

@@ -16,7 +16,6 @@ import {
   createWordFromEntry,
   findWordByForm,
   getOrCreateWord,
-  wordInclude,
 } from "@/lib/server/vocabulary";
 import { toWordSummary, type WordSummary } from "@/lib/server/word-dto";
 import { CEFR_LEVELS, PARTS_OF_SPEECH } from "@/lib/constants";

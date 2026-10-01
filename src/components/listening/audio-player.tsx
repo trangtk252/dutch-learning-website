@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useIsClient } from "@/lib/use-is-client";
 import { Pause, Play, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ClickableText } from "@/components/words/clickable-text";
@@ -39,37 +40,34 @@ export function ListeningPlayer({
   const [plays, setPlays] = useState(0);
   const [rate, setRate] = useState(0.9);
   const [showTranscript, setShowTranscript] = useState(showTranscriptInitially);
-  const [ttsReady, setTtsReady] = useState(true);
   const stopRef = useRef(false);
-  const speakers = [...new Set(segments.map((s) => s.speaker ?? ""))];
+  const speakers = useMemo(() => [...new Set(segments.map((s) => s.speaker ?? ""))], [segments]);
+  const isClient = useIsClient();
+  const ttsReady = Boolean(audioUrl) || !isClient || tts.available;
 
-  useEffect(() => setTtsReady(Boolean(audioUrl) || tts.available), [audioUrl, tts]);
   useEffect(() => () => tts.stop(), [tts]);
 
-  const playFrom = useCallback(
-    (index: number, single = false) => {
-      if (index >= segments.length) {
-        setPlaying(false);
-        setCurrent(null);
-        return;
-      }
-      const seg = segments[index];
-      setCurrent(index);
-      tts.speak(seg.text, {
-        rate,
-        voiceIndex: speakers.indexOf(seg.speaker ?? ""),
-        onEnd: () => {
-          if (stopRef.current || single) {
-            setPlaying(false);
-            if (single) setCurrent(null);
-            return;
-          }
-          setTimeout(() => !stopRef.current && playFrom(index + 1), 350);
-        },
-      });
-    },
-    [segments, rate, speakers, tts],
-  );
+  function playFrom(index: number, single = false) {
+    if (index >= segments.length) {
+      setPlaying(false);
+      setCurrent(null);
+      return;
+    }
+    const seg = segments[index];
+    setCurrent(index);
+    tts.speak(seg.text, {
+      rate,
+      voiceIndex: speakers.indexOf(seg.speaker ?? ""),
+      onEnd: () => {
+        if (stopRef.current || single) {
+          setPlaying(false);
+          if (single) setCurrent(null);
+          return;
+        }
+        setTimeout(() => !stopRef.current && playFrom(index + 1), 350);
+      },
+    });
+  }
 
   const limitReached = maxPlays !== undefined && plays >= maxPlays;
 

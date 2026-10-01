@@ -84,3 +84,39 @@ export async function getActivitySummary(userId: string, timeZone: string) {
     }),
   };
 }
+
+export async function getDailyMinutes(userId: string, timeZone: string, days: number) {
+  const today = localDay(new Date(), timeZone);
+  const rows = await db.dailyActivity.findMany({ where: { userId, date: { gte: addDays(today, -(days - 1)) } } });
+  return Array.from({ length: days }, (_, i) => {
+    const day = addDays(today, i - days + 1);
+    return { date: day, minutes: rows.find((r) => r.date.getTime() === day.getTime())?.minutes ?? 0 };
+  });
+}
+
+/** Awards milestone badges whose conditions are met. Subtle by design. */
+export async function awardAchievements(userId: string, streak: number) {
+  const [cards, reviews, conversations, writing, exams, earned, all] = await Promise.all([
+    db.vocabularyCard.count({ where: { userId } }),
+    db.review.count({ where: { userId } }),
+    db.conversation.count({ where: { userId, endedAt: { not: null } } }),
+    db.writingSubmission.count({ where: { userId } }),
+    db.attempt.count({ where: { userId, kind: "MOCK_EXAM", completedAt: { not: null } } }),
+    db.userAchievement.findMany({ where: { userId }, select: { achievementId: true } }),
+    db.achievement.findMany(),
+  ]);
+  const met: Record<string, boolean> = {
+    "first-word": cards >= 1,
+    "words-50": cards >= 50,
+    "reviews-100": reviews >= 100,
+    "streak-7": streak >= 7,
+    "first-conversation": conversations >= 1,
+    "first-writing": writing >= 1,
+    "first-mock-exam": exams >= 1,
+  };
+  const have = new Set(earned.map((e) => e.achievementId));
+  const toAward = all.filter((a) => met[a.code] && !have.has(a.id));
+  if (toAward.length) {
+    await db.userAchievement.createMany({ data: toAward.map((a) => ({ userId, achievementId: a.id })), skipDuplicates: true });
+  }
+}

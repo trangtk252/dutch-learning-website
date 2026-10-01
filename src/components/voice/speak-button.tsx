@@ -1,7 +1,7 @@
 "use client";
 
 import { Volume2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useIsClient } from "@/lib/use-is-client";
 import { cn } from "@/lib/cn";
 import { useVoice } from "./voice-context";
 
@@ -18,9 +18,8 @@ export function SpeakButton({
   rate?: number;
 }) {
   const { tts } = useVoice();
-  const [available, setAvailable] = useState(false);
-  useEffect(() => setAvailable(tts.available), [tts]);
-  if (!available) return null;
+  const isClient = useIsClient();
+  if (!isClient || !tts.available) return null;
   return (
     <button
       type="button"

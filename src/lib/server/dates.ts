@@ -54,3 +54,7 @@ export function relativeDays(date: Date, now = new Date()): string {
   const months = Math.round(days / 30);
   return months === 1 ? "a month ago" : `${months} months ago`;
 }
+
+export function daysUntil(date: Date | null | undefined, now = new Date()): number | null {
+  return date ? Math.ceil((date.getTime() - now.getTime()) / 86_400_000) : null;
+}

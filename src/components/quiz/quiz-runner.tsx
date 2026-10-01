@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { Check, Clock, Volume2, X } from "lucide-react";
 import { checkAnswerAction, submitAttemptAction } from "@/lib/actions/quiz";
 import type { AnswerInput, ClientQuestion, QuestionResult } from "@/lib/quiz/types";
@@ -39,6 +39,7 @@ export function QuizRunner({
   timeLimitSec,
   title = "Questions",
   onComplete,
+  sections,
 }: {
   questions: ClientQuestion[];
   kind: Kind;
@@ -48,6 +49,8 @@ export function QuizRunner({
   timeLimitSec?: number;
   title?: string;
   onComplete?: (score: { correct: number; total: number }) => void;
+  /** Optional grouping (e.g. mock-exam parts): content is shown before its questions. */
+  sections?: { key: string; content: ReactNode; questionIds: string[] }[];
 }) {
   const { tts } = useVoice();
   const [answers, setAnswers] = useState<Record<string, AnswerInput>>({});
@@ -55,7 +58,10 @@ export function QuizRunner({
   const [final, setFinal] = useState<{ correct: number; total: number; results: QuestionResult[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  const startedAt = useRef(Date.now());
+  const startedAt = useRef(0);
+  useEffect(() => {
+    startedAt.current = Date.now();
+  }, []);
   const [remaining, setRemaining] = useState(timeLimitSec ?? 0);
   const submitted = useRef(false);
 
@@ -139,8 +145,12 @@ export function QuizRunner({
         </div>
       )}
 
+      {(sections ?? [{ key: "all", content: null, questionIds: questions.map((q) => q.id) }]).map((section) => (
+      <Fragment key={section.key}>
+      {section.content}
       <ol className="space-y-4">
-        {questions.map((q, i) => {
+        {questions.filter((q) => section.questionIds.includes(q.id)).map((q) => {
+          const i = questions.indexOf(q);
           const a = answers[q.id];
           const result = finalById.get(q.id) ?? (mode === "PRACTICE" ? checked[q.id] : undefined);
           const locked = Boolean(final || (mode === "PRACTICE" && checked[q.id]));
@@ -224,6 +234,8 @@ export function QuizRunner({
           );
         })}
       </ol>
+      </Fragment>
+      ))}
 
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       {!final && (

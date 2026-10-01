@@ -13,13 +13,13 @@ import { getEmailProvider } from "./email";
  */
 /**
  * Development only: accept logins both from GitHub Codespaces' forwarded URLs
- * (https://<codespace>-3000.app.github.dev) and from localhost (e.g. VS Code
- * desktop forwarding a codespace port), whatever BETTER_AUTH_URL is set to.
+ * (https://<codespace>-3000.app.github.dev) and from localhost on any port (e.g. VS Code
+ * desktop forwarding a codespace port to localhost:3001), whatever BETTER_AUTH_URL is set to.
  * Production trusts only BETTER_AUTH_URL.
  */
 const devTrustedOrigins =
   process.env.NODE_ENV === "development"
-    ? ["https://*.app.github.dev", "http://localhost:3000", "http://127.0.0.1:3000"]
+    ? ["https://*.app.github.dev", "http://localhost:*", "http://127.0.0.1:*"]
     : [];
 
 export const auth = betterAuth({

@@ -17,7 +17,9 @@ No installation needed — everything runs in a cloud machine from GitHub:
 3. The website opens in a new browser tab when it's ready. If it doesn't, open the **PORTS** tab and click the globe icon next to port **3000** (“Website”).
 4. Log in with **demo@example.com / leerdutch123**, or create your own account.
 
-To restart the website later (for example after reopening a stopped codespace), run `bash .devcontainer/start.sh` in the terminal. The setup lives in `.devcontainer/`; the AI tutor runs in offline mode unless you add `AI_PROVIDER="anthropic"` and `AI_API_KEY` to `.env`.
+To restart the website later (for example after reopening a stopped codespace), run `bash .devcontainer/start.sh` in the terminal.
+
+If the forwarded address shows **HTTP 502**: restart the server with `pkill -f next-server; pkill -f "next dev"; sleep 2; bash .devcontainer/start.sh`, then in the **PORTS** tab right-click port 3000 → **Stop Forwarding Port**, click **Forward a Port**, enter `3000`, and open it again. The setup lives in `.devcontainer/`; the AI tutor runs in offline mode unless you add `AI_PROVIDER="anthropic"` and `AI_API_KEY` to `.env`.
 
 ## Quick start (your own computer)
 

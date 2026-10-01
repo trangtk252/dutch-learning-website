@@ -16,9 +16,11 @@ fi
 
 if (echo > /dev/tcp/localhost/3000) 2>/dev/null; then
   echo "The website is already running on port 3000 — open it from the PORTS tab."
+  echo "To restart it: pkill -f next-server; pkill -f \"next dev\"; sleep 2; bash .devcontainer/start.sh"
   exit 0
 fi
 
 echo "Starting the website… it opens in a new browser tab when ready (or use the PORTS tab, port 3000)."
 echo "Demo login: demo@example.com / leerdutch123"
-exec npm run dev
+# Listen on all IPv4 addresses: Codespaces port forwarding returns 502 otherwise.
+exec npm run dev -- -H 0.0.0.0

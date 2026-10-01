@@ -19,6 +19,7 @@ describe("offline rule checker", () => {
 
   it("moves the verb to the end after omdat", () => {
     expect(fix("Ik blijf thuis omdat ik ben ziek.")).toBe("Ik blijf thuis omdat ik ziek ben.");
+    expect(fix("Het was leuk omdat ik was met vrienden.")).toBe("Het was leuk omdat ik met vrienden was.");
   });
 
   it("fixes de/het for common nouns and niet een", () => {

@@ -52,6 +52,7 @@ const FINITE_VERBS = new Set([
   "kan", "kun", "kunt", "kunnen", "moet", "moeten", "mag", "mogen", "ga", "gaat", "gaan",
   "woon", "woont", "wonen", "werk", "werkt", "werken", "vind", "vindt", "vinden",
   "spreek", "spreekt", "spreken", "kom", "komt", "komen", "leer", "leert", "leren",
+  "was", "waren", "had", "hadden", "ging", "gingen", "kwam", "kwamen", "wilde", "kon", "moest",
 ]);
 const SUBORDINATORS = "omdat|dat|als|wanneer|terwijl|hoewel|zodat|of|nadat|voordat|totdat";
 const SUBJECTS = "ik|jij|je|hij|zij|ze|we|wij|u|jullie|het|mijn \\w+|de \\w+";

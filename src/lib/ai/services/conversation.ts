@@ -106,7 +106,7 @@ export async function evaluateSpeaking(args: {
       const fluency = clampScore(avgWords / 3);
       return {
         grammar: { score: accuracy, note: corrections.length ? "Some recurring grammar slips were detected — see the corrections." : "No common grammar errors were detected by the offline checker." },
-        vocabulary: { score: clampScore(avgWords / 3), note: "Offline estimate based on the length of your answers." },
+        vocabulary: { score: clampScore(avgWords / 4), note: "Offline estimate based on the length of your answers." },
         fluency: { score: fluency, note: `You averaged about ${Math.round(avgWords)} words per turn across ${learnerTurns.length} turns.` },
         accuracy: { score: accuracy, note: `${corrections.length} issue(s) found by the offline rule checker.` },
         naturalness: { score: 3, note: "Naturalness can only be judged with an AI provider connected." },

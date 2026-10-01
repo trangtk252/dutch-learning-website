@@ -110,3 +110,6 @@ export const NT2_PROGRAM_LABELS = {
   PROGRAMMA_I: "NT2 Programma I (B1)",
   PROGRAMMA_II: "NT2 Programma II (B2)",
 } as const;
+
+/** Cookie mirroring the profile's font-scale setting so the root layout can apply it. */
+export const FONT_SCALE_COOKIE = "font-scale";

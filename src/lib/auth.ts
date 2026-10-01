@@ -11,9 +11,16 @@ import { getEmailProvider } from "./email";
  * Social providers can be added later via `socialProviders` — the Account
  * table already supports multiple providers per user.
  */
+/**
+ * Development only: also accept logins from GitHub Codespaces' forwarded URLs
+ * (https://<codespace>-3000.app.github.dev). Production trusts only BETTER_AUTH_URL.
+ */
+const devTrustedOrigins = process.env.NODE_ENV === "development" ? ["https://*.app.github.dev"] : [];
+
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
+  trustedOrigins: devTrustedOrigins,
   database: prismaAdapter(db, { provider: "postgresql" }),
   emailAndPassword: {
     enabled: true,

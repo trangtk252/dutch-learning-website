@@ -12,10 +12,15 @@ import { getEmailProvider } from "./email";
  * table already supports multiple providers per user.
  */
 /**
- * Development only: also accept logins from GitHub Codespaces' forwarded URLs
- * (https://<codespace>-3000.app.github.dev). Production trusts only BETTER_AUTH_URL.
+ * Development only: accept logins both from GitHub Codespaces' forwarded URLs
+ * (https://<codespace>-3000.app.github.dev) and from localhost (e.g. VS Code
+ * desktop forwarding a codespace port), whatever BETTER_AUTH_URL is set to.
+ * Production trusts only BETTER_AUTH_URL.
  */
-const devTrustedOrigins = process.env.NODE_ENV === "development" ? ["https://*.app.github.dev"] : [];
+const devTrustedOrigins =
+  process.env.NODE_ENV === "development"
+    ? ["https://*.app.github.dev", "http://localhost:3000", "http://127.0.0.1:3000"]
+    : [];
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,

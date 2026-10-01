@@ -8,7 +8,18 @@ It combines spaced-repetition vocabulary, an AI speaking partner, listening and 
 
 ---
 
-## Quick start
+## Try it in your browser (GitHub Codespaces)
+
+No installation needed — everything runs in a cloud machine from GitHub:
+
+1. On the repository page, click **Code → Codespaces → Create codespace on this branch**.
+2. Wait a few minutes the first time: the codespace installs dependencies, starts a PostgreSQL database and adds the sample content (see the terminal).
+3. The website opens in a new browser tab when it's ready. If it doesn't, open the **PORTS** tab and click the globe icon next to port **3000** (“Website”).
+4. Log in with **demo@example.com / leerdutch123**, or create your own account.
+
+To restart the website later (for example after reopening a stopped codespace), run `bash .devcontainer/start.sh` in the terminal. The setup lives in `.devcontainer/`; the AI tutor runs in offline mode unless you add `AI_PROVIDER="anthropic"` and `AI_API_KEY` to `.env`.
+
+## Quick start (your own computer)
 
 Requirements: Node.js 20.9+ and PostgreSQL 14+.
 

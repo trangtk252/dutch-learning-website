@@ -11,6 +11,7 @@ import { CEFR_LEVELS, SCENARIOS, SCENARIO_INFO, type ScenarioKey } from "@/lib/c
 import { recordMistakes } from "@/lib/server/mistakes";
 import { logStudy } from "@/lib/server/progress";
 import { addDays } from "@/lib/server/dates";
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/server/rate-limit";
 import type { ChatTurn } from "@/lib/ai/types";
 
 const MAX_HISTORY = 30;
@@ -70,6 +71,7 @@ export async function sendMessageAction(input: z.input<typeof SendSchema>): Prom
   });
   if (!conv) return { ok: false, error: "Conversation not found." };
   if (conv.endedAt) return { ok: false, error: "This conversation has ended." };
+  if (!checkRateLimit(user.id, "conversation")) return { ok: false, error: RATE_LIMIT_MESSAGE };
   if (conv.messages.length >= MAX_TURNS) return { ok: false, error: "This conversation is getting long — finish it to get your feedback, then start a new one." };
 
   const history: ChatTurn[] = [

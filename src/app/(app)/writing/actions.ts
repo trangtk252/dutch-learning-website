@@ -8,6 +8,7 @@ import { AIError } from "@/lib/ai";
 import { correctDutchText } from "@/lib/ai/services/language";
 import { countWords } from "@/lib/dutch/text";
 import { recordMistakes } from "@/lib/server/mistakes";
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/server/rate-limit";
 import { logStudy } from "@/lib/server/progress";
 
 const Input = z.object({
@@ -23,6 +24,7 @@ export async function submitWritingAction(_prev: { error?: string } | null, form
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { promptId, text, task } = parsed.data;
   const prompt = promptId ? await db.writingPrompt.findUnique({ where: { id: promptId } }) : null;
+  if (!checkRateLimit(user.id, "writing")) return { error: RATE_LIMIT_MESSAGE };
   if (!prompt && !task) return { error: "Describe what you're writing (e.g. 'an email to my landlord')." };
 
   let submissionId: string;

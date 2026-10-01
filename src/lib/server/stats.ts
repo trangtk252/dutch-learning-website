@@ -100,10 +100,9 @@ export async function getProgressEstimates(userId: string, profile: UserProfile)
   const [knownWords, grammarTopics, grammarAttempts, listening, reading, speaking, writing, exams] = await Promise.all([
     db.vocabularyCard.count({ where: { userId, state: "REVIEW" } }),
     db.grammarTopic.findMany({ where: { published: true, level: { in: levelsUpToTarget } }, select: { id: true } }),
-    db.attempt.groupBy({
-      by: ["grammarTopicId"],
+    db.attempt.findMany({
       where: { userId, kind: "GRAMMAR", completedAt: { not: null }, total: { gt: 0 } },
-      _max: { correct: true, total: true },
+      select: { grammarTopicId: true, correct: true, total: true },
     }),
     recentAccuracy(userId, "LISTENING"),
     recentAccuracy(userId, "READING"),
@@ -132,9 +131,11 @@ export async function getProgressEstimates(userId: string, profile: UserProfile)
 
   // A grammar topic counts as "solid" when its best attempt scored ≥ 80%.
   const topicIds = new Set(grammarTopics.map((t) => t.id));
-  const solid = grammarAttempts.filter(
-    (a) => a.grammarTopicId && topicIds.has(a.grammarTopicId) && (a._max.total ?? 0) > 0 && (a._max.correct ?? 0) / (a._max.total ?? 1) >= 0.8,
-  ).length;
+  const solid = new Set(
+    grammarAttempts
+      .filter((a) => a.grammarTopicId && topicIds.has(a.grammarTopicId) && a.correct / a.total >= 0.8)
+      .map((a) => a.grammarTopicId),
+  ).size;
   const grammar = grammarTopics.length ? Math.round((solid / grammarTopics.length) * 100) : null;
 
   const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);

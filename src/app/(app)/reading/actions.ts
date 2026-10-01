@@ -8,6 +8,7 @@ import { AIError } from "@/lib/ai";
 import { generateReadingExercise } from "@/lib/ai/services/content";
 import { countWords, estimateReadingMinutes, slugify } from "@/lib/dutch/text";
 import { findWordByForm } from "@/lib/server/vocabulary";
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/server/rate-limit";
 import { CEFR_LEVELS } from "@/lib/constants";
 
 const Input = z.object({
@@ -24,7 +25,8 @@ function validQuestion(q: { type: string; options: { isCorrect: boolean }[] }) {
 }
 
 export async function generateReadingAction(_prev: { error?: string } | null, formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
+  if (!checkRateLimit(user.id, "generate")) return { error: RATE_LIMIT_MESSAGE };
   const parsed = Input.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Please choose a level, text type and topic." };
   let slug: string;

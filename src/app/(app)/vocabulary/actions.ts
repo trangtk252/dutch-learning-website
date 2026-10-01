@@ -18,6 +18,7 @@ import {
   getOrCreateWord,
 } from "@/lib/server/vocabulary";
 import { toWordSummary, type WordSummary } from "@/lib/server/word-dto";
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/server/rate-limit";
 import { CEFR_LEVELS, PARTS_OF_SPEECH } from "@/lib/constants";
 
 const WordText = z.string().trim().min(1, "Type a Dutch word").max(80, "That's too long for a single word or phrase");
@@ -34,6 +35,7 @@ export async function addWordAction(_prev: { error?: string } | null, formData: 
   const parsed = WordText.safeParse(formData.get("word"));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const note = String(formData.get("note") ?? "").trim().slice(0, 2000) || null;
+  if (!checkRateLimit(user.id, "vocabulary")) return { error: RATE_LIMIT_MESSAGE };
   let cardId: string;
   try {
     const { word } = await getOrCreateWord(parsed.data, { userId: user.id });
@@ -79,6 +81,7 @@ export async function saveWordFromContextAction(
   const user = await requireUser();
   const parsed = ContextSave.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Invalid word" };
+  if (!checkRateLimit(user.id, "vocabulary")) return { ok: false, error: RATE_LIMIT_MESSAGE };
   try {
     const { word } = await getOrCreateWord(parsed.data.text, { context: parsed.data.sentence, userId: user.id });
     const card = await addCardForUser({

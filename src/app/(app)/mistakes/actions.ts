@@ -6,10 +6,12 @@ import { requireUser } from "@/lib/session";
 import { AIError } from "@/lib/ai";
 import { analyzeUserMistakes } from "@/lib/ai/services/coach";
 import type { MistakeAnalysis } from "@/lib/ai/schemas";
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from "@/lib/server/rate-limit";
 import { addDays } from "@/lib/server/dates";
 
 export async function analyzeMistakesAction(): Promise<{ ok: true; analysis: MistakeAnalysis } | { ok: false; error: string }> {
   const user = await requireUser();
+  if (!checkRateLimit(user.id, "analysis")) return { ok: false, error: RATE_LIMIT_MESSAGE };
   const mistakes = await db.userMistake.findMany({
     where: { userId: user.id, createdAt: { gte: addDays(new Date(), -60) } },
     orderBy: { createdAt: "desc" },

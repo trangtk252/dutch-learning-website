@@ -33,8 +33,8 @@ export type Mastery = "needs-practice" | "improving" | "good";
  * practice answers in the remedying grammar topic offset them.
  */
 export function masteryFor(recent14: number, total: number, practiceAccuracy: number | null): Mastery {
-  if (recent14 >= 3 || (recent14 >= 1 && (practiceAccuracy ?? 0) < 0.6)) return "needs-practice";
-  if (recent14 >= 1 || (total >= 5 && (practiceAccuracy ?? 0) < 0.8)) return "improving";
+  if (recent14 >= 3 || (recent14 >= 1 && practiceAccuracy !== null && practiceAccuracy < 0.6)) return "needs-practice";
+  if (recent14 >= 1 || (total >= 5 && (practiceAccuracy === null || practiceAccuracy < 0.8))) return "improving";
   return "good";
 }
 

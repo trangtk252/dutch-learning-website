@@ -56,7 +56,8 @@ export function AppShell({
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[248px_1fr]">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-screen flex-col border-r border-line bg-surface px-4 py-5 lg:flex">
+      <aside className="hidden border-r border-line bg-surface lg:block">
+        <div className="sticky top-0 flex h-screen flex-col px-4 py-5">
         <Logo />
         <Link
           href="/search"
@@ -85,6 +86,7 @@ export function AppShell({
           )}
         </nav>
         <p className="mt-4 truncate px-3 text-xs text-muted">Signed in as {userName}</p>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-col">

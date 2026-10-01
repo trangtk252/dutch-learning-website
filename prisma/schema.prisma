@@ -1,0 +1,1127 @@
+// Dutch learning platform — relational schema.
+//
+// Conventions
+// - Shared, curated content (words, readings, grammar, …) is global and has a
+//   `source` (HUMAN | AI | IMPORTED) plus `verified` so human-reviewed content
+//   can override AI-generated content.
+// - Everything a learner produces (cards, attempts, mistakes, conversations…)
+//   hangs off `User` with `onDelete: Cascade`, so deleting an account removes it.
+// - JSON is avoided where a relational structure is clearer.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────── Enums ───────────────────────────────
+
+enum CefrLevel {
+  A1
+  A2
+  B1
+  B2
+  C1
+}
+
+enum Skill {
+  VOCABULARY
+  GRAMMAR
+  SPEAKING
+  LISTENING
+  READING
+  WRITING
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Nt2Program {
+  NONE
+  PROGRAMMA_I
+  PROGRAMMA_II
+}
+
+enum ContentSource {
+  HUMAN
+  AI
+  IMPORTED
+}
+
+enum PartOfSpeech {
+  NOUN
+  VERB
+  ADJECTIVE
+  ADVERB
+  PREPOSITION
+  CONJUNCTION
+  PRONOUN
+  ARTICLE
+  NUMERAL
+  INTERJECTION
+  PHRASE
+  OTHER
+}
+
+enum Article {
+  DE
+  HET
+  DE_HET
+}
+
+enum Auxiliary {
+  HEBBEN
+  ZIJN
+  HEBBEN_ZIJN
+}
+
+enum WordRelationType {
+  SYNONYM
+  ANTONYM
+}
+
+enum CardState {
+  NEW
+  LEARNING
+  REVIEW
+  RELEARNING
+}
+
+enum Rating {
+  AGAIN
+  HARD
+  GOOD
+  EASY
+}
+
+enum LearningContext {
+  MANUAL
+  READING
+  LISTENING
+  SPEAKING
+  WRITING
+  BLOG
+  GRAMMAR
+  IMPORT
+}
+
+enum ErrorCategory {
+  WORD_ORDER
+  VERB_CONJUGATION
+  SEPARABLE_VERBS
+  ARTICLES
+  DE_HET
+  PREPOSITIONS
+  PERFECT_TENSE
+  PAST_TENSE
+  ADJECTIVE_ENDINGS
+  MODAL_VERBS
+  SUBORDINATE_CLAUSES
+  RELATIVE_CLAUSES
+  PRONOUNS
+  PLURALS
+  NEGATION
+  VOCABULARY_CHOICE
+  SPELLING
+  REGISTER
+  PRONUNCIATION
+  OTHER
+}
+
+enum MistakeSource {
+  SPEAKING
+  WRITING
+  QUIZ
+  READING
+  LISTENING
+  VOCABULARY
+  GRAMMAR
+}
+
+enum GrammarArea {
+  WORD_ORDER
+  ARTICLES
+  NOUNS
+  PRONOUNS
+  VERBS
+  MODAL_VERBS
+  PERFECT_TENSE
+  IMPERFECT_TENSE
+  FUTURE
+  SEPARABLE_VERBS
+  SUBORDINATE_CLAUSES
+  CONJUNCTIONS
+  PREPOSITIONS
+  ADJECTIVES
+  RELATIVE_CLAUSES
+  PASSIVE_VOICE
+  CONDITIONALS
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  FILL_BLANK
+  SELECT_HEARD
+  DICTATION
+  OPEN
+}
+
+enum QuestionFocus {
+  MAIN_IDEA
+  DETAIL
+  INFERENCE
+  VOCABULARY
+  GRAMMAR
+}
+
+enum QuestionSet {
+  PRACTICE
+  QUIZ
+}
+
+enum ReadingGenre {
+  STORY
+  NEWS
+  EVERYDAY
+  EMAIL
+  WORKPLACE
+  CULTURE
+  OPINION
+  FORMAL
+}
+
+enum ListeningKind {
+  SHORT
+  DIALOGUE
+  ANNOUNCEMENT
+  MONOLOGUE
+  NT2
+}
+
+enum MediaKind {
+  FILM
+  SERIES
+  YOUTUBE
+  NEWS
+  KIDS
+  DOCUMENTARY
+}
+
+enum ConversationScenario {
+  CASUAL
+  SUPERMARKET
+  WORK
+  DOCTOR
+  RESTAURANT
+  APPOINTMENTS
+  SMALL_TALK
+  JOB_INTERVIEW
+  BUREAUCRACY
+  RENTING
+  TRAVEL
+  NT2_SPEAKING
+  FREE
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+enum InputMode {
+  TEXT
+  VOICE
+}
+
+enum WritingTaskType {
+  EMAIL
+  MESSAGE
+  FORM
+  OPINION
+  ESSAY
+  COMPLAINT
+}
+
+enum Register {
+  INFORMAL
+  NEUTRAL
+  FORMAL
+}
+
+enum AttemptKind {
+  READING
+  LISTENING
+  GRAMMAR
+  MOCK_EXAM
+}
+
+enum AttemptMode {
+  PRACTICE
+  EXAM
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// ─────────────────────────── Auth (Better Auth) ───────────────────────────
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  role          Role     @default(USER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions      Session[]
+  accounts      Account[]
+  profile       UserProfile?
+  cards         VocabularyCard[]
+  reviews       Review[]
+  conversations Conversation[]
+  mistakes      UserMistake[]
+  attempts      Attempt[]
+  writing       WritingSubmission[]
+  studySessions StudySession[]
+  dailyActivity DailyActivity[]
+  achievements  UserAchievement[]
+  blogPosts     BlogPost[]
+  createdWords  VocabularyWord[]    @relation("WordCreatedBy")
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+/// One row per login method (email+password today; OAuth providers later).
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ─────────────────────────────── Profile ───────────────────────────────
+
+model UserProfile {
+  id                        String     @id @default(cuid())
+  userId                    String     @unique
+  user                      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentLevel              CefrLevel  @default(A2)
+  targetLevel               CefrLevel  @default(B1)
+  motivation                String?
+  preparingNt2              Boolean    @default(false)
+  nt2Program                Nt2Program @default(NONE)
+  examDate                  DateTime?
+  dailyMinutes              Int        @default(20)
+  weeklyGoalDays            Int        @default(5)
+  preferredActivities       Skill[]
+  strengths                 Skill[]
+  weaknesses                Skill[]
+  newCardsPerDay            Int        @default(10)
+  /// Font scale in percent (accessibility setting).
+  fontScale                 Int        @default(100)
+  /// When false, conversation transcripts are deleted when the session ends.
+  storeConversations        Boolean    @default(true)
+  /// Days after which stored conversations are purged. 0 = keep until deleted.
+  conversationRetentionDays Int        @default(90)
+  timezone                  String     @default("Europe/Amsterdam")
+  onboardedAt               DateTime?
+  createdAt                 DateTime   @default(now())
+  updatedAt                 DateTime   @updatedAt
+}
+
+// ───────────────────────────── Vocabulary ─────────────────────────────
+
+model Topic {
+  id         String              @id @default(cuid())
+  slug       String              @unique
+  name       String
+  words      WordTopic[]
+  readings   ReadingExercise[]
+  listenings ListeningExercise[]
+}
+
+/// Shared dictionary entry. A learner's personal copy is a VocabularyCard.
+model VocabularyWord {
+  id           String        @id @default(cuid())
+  lemma        String
+  /// Lower-cased lemma without article, used for lookups.
+  normalized   String
+  english      String
+  partOfSpeech PartOfSpeech
+  article      Article?
+  plural       String?
+  diminutive   String?
+  cefrLevel    CefrLevel?
+  ipa          String?
+  audioUrl     String?
+  notes        String?
+  source       ContentSource @default(HUMAN)
+  /// Human-reviewed. Verified entries are never overwritten by AI enrichment.
+  verified     Boolean       @default(false)
+  createdById  String?
+  createdBy    User?         @relation("WordCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  verb         VerbForms?
+  adjective    AdjectiveForms?
+  examples     WordExample[]
+  collocations WordCollocation[]
+  relations    WordRelation[]
+  topics       WordTopic[]
+  cards        VocabularyCard[]
+  readings     ReadingWord[]
+  listenings   ListeningWord[]
+  grammar      GrammarTopicWord[]
+
+  @@unique([normalized, partOfSpeech])
+  @@index([normalized])
+  @@index([cefrLevel])
+}
+
+model VerbForms {
+  wordId          String         @id
+  word            VocabularyWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  presentIk       String
+  presentJij      String
+  presentHij      String
+  presentWij      String
+  pastSingular    String
+  pastPlural      String
+  pastParticiple  String
+  auxiliary       Auxiliary      @default(HEBBEN)
+  separable       Boolean        @default(false)
+  separablePrefix String?
+  irregular       Boolean        @default(false)
+  reflexive       Boolean        @default(false)
+}
+
+model AdjectiveForms {
+  wordId      String         @id
+  word        VocabularyWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  inflected   String
+  comparative String?
+  superlative String?
+}
+
+model WordExample {
+  id      String         @id @default(cuid())
+  wordId  String
+  word    VocabularyWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  dutch   String
+  english String
+  order   Int            @default(0)
+
+  @@index([wordId])
+}
+
+model WordCollocation {
+  id      String         @id @default(cuid())
+  wordId  String
+  word    VocabularyWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  phrase  String
+  english String
+
+  @@index([wordId])
+}
+
+model WordRelation {
+  id     String           @id @default(cuid())
+  wordId String
+  word   VocabularyWord   @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  type   WordRelationType
+  text   String
+
+  @@index([wordId])
+}
+
+model WordTopic {
+  wordId  String
+  topicId String
+  word    VocabularyWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  topic   Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([wordId, topicId])
+  @@index([topicId])
+}
+
+/// A learner's flashcard for a word, including FSRS scheduling state.
+model VocabularyCard {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordId          String
+  word            VocabularyWord  @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  personalNote    String?
+  /// Learner-assigned importance, 1 (low) – 3 (high).
+  importance      Int             @default(2)
+  context         LearningContext @default(MANUAL)
+  /// Sentence where the word was encountered, if any.
+  contextSentence String?
+  suspended       Boolean         @default(false)
+
+  // FSRS state
+  state         CardState @default(NEW)
+  due           DateTime  @default(now())
+  stability     Float     @default(0)
+  difficulty    Float     @default(0)
+  elapsedDays   Int       @default(0)
+  scheduledDays Int       @default(0)
+  learningSteps Int       @default(0)
+  reps          Int       @default(0)
+  lapses        Int       @default(0)
+  lastReview    DateTime?
+
+  correctCount   Int       @default(0)
+  incorrectCount Int       @default(0)
+  lastFailedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reviews   Review[]
+
+  @@unique([userId, wordId])
+  @@index([userId, due])
+  @@index([userId, state])
+  @@index([userId, createdAt])
+}
+
+/// Immutable review log (also lets FSRS parameters be optimised later).
+model Review {
+  id              String         @id @default(cuid())
+  cardId          String
+  card            VocabularyCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating          Rating
+  stateBefore     CardState
+  stabilityAfter  Float
+  difficultyAfter Float
+  elapsedDays     Int
+  scheduledDays   Int
+  dueAfter        DateTime
+  durationMs      Int?
+  reviewedAt      DateTime       @default(now())
+
+  @@index([userId, reviewedAt])
+  @@index([cardId, reviewedAt])
+}
+
+// ─────────────────────── Questions & attempts ───────────────────────
+
+/// A question belongs to exactly one parent: a reading, a listening exercise,
+/// a grammar topic or a mock-exam part.
+model Question {
+  id                  String             @id @default(cuid())
+  type                QuestionType
+  focus               QuestionFocus?
+  set                 QuestionSet        @default(PRACTICE)
+  prompt              String
+  /// For FILL_BLANK: sentence with "___" marking the gap.
+  explanation         String?
+  order               Int                @default(0)
+  readingExerciseId   String?
+  readingExercise     ReadingExercise?   @relation(fields: [readingExerciseId], references: [id], onDelete: Cascade)
+  listeningExerciseId String?
+  listeningExercise   ListeningExercise? @relation(fields: [listeningExerciseId], references: [id], onDelete: Cascade)
+  grammarTopicId      String?
+  grammarTopic        GrammarTopic?      @relation(fields: [grammarTopicId], references: [id], onDelete: Cascade)
+  mockExamPartId      String?
+  mockExamPart        MockExamPart?      @relation(fields: [mockExamPartId], references: [id], onDelete: Cascade)
+  /// Grammar category a wrong answer is recorded under in the mistake tracker.
+  errorCategory       ErrorCategory?
+  options             AnswerOption[]
+  responses           QuestionResponse[]
+
+  @@index([readingExerciseId])
+  @@index([listeningExerciseId])
+  @@index([grammarTopicId])
+  @@index([mockExamPartId])
+}
+
+/// Choice for MC/TF questions; for FILL_BLANK/DICTATION every option is an accepted answer.
+model AnswerOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean  @default(false)
+  order      Int      @default(0)
+
+  @@index([questionId])
+}
+
+model Attempt {
+  id                  String             @id @default(cuid())
+  userId              String
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind                AttemptKind
+  mode                AttemptMode        @default(PRACTICE)
+  readingExerciseId   String?
+  readingExercise     ReadingExercise?   @relation(fields: [readingExerciseId], references: [id], onDelete: SetNull)
+  listeningExerciseId String?
+  listeningExercise   ListeningExercise? @relation(fields: [listeningExerciseId], references: [id], onDelete: SetNull)
+  grammarTopicId      String?
+  grammarTopic        GrammarTopic?      @relation(fields: [grammarTopicId], references: [id], onDelete: SetNull)
+  mockExamId          String?
+  mockExam            MockExam?          @relation(fields: [mockExamId], references: [id], onDelete: SetNull)
+  correct             Int                @default(0)
+  total               Int                @default(0)
+  startedAt           DateTime           @default(now())
+  completedAt         DateTime?
+  durationSec         Int?
+  responses           QuestionResponse[]
+
+  @@index([userId, kind, completedAt])
+  @@index([userId, mockExamId])
+}
+
+model QuestionResponse {
+  id         String   @id @default(cuid())
+  attemptId  String
+  attempt    Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionId   String?
+  answerText String?
+  isCorrect  Boolean
+
+  @@index([attemptId])
+  @@index([questionId])
+}
+
+// ─────────────────────────────── Reading ───────────────────────────────
+
+model ReadingExercise {
+  id             String         @id @default(cuid())
+  slug           String         @unique
+  title          String
+  level          CefrLevel
+  genre          ReadingGenre
+  topicId        String?
+  topic          Topic?         @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  summaryEn      String?
+  body           String
+  wordCount      Int
+  readingMinutes Int
+  isNt2          Boolean        @default(false)
+  source         ContentSource  @default(HUMAN)
+  published      Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  questions      Question[]
+  words          ReadingWord[]
+  attempts       Attempt[]
+  mockExamParts  MockExamPart[]
+
+  @@index([level, published])
+}
+
+model ReadingWord {
+  readingId String
+  wordId    String
+  reading   ReadingExercise @relation(fields: [readingId], references: [id], onDelete: Cascade)
+  word      VocabularyWord  @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@id([readingId, wordId])
+}
+
+// ────────────────────────────── Listening ──────────────────────────────
+
+model ListeningExercise {
+  id            String              @id @default(cuid())
+  slug          String              @unique
+  title         String
+  level         CefrLevel
+  kind          ListeningKind
+  topicId       String?
+  topic         Topic?              @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  description   String?
+  /// Recorded audio, if available. Without it the transcript is voiced by the
+  /// configured text-to-speech provider (browser speech synthesis by default).
+  audioUrl      String?
+  durationSec   Int
+  isNt2         Boolean             @default(false)
+  source        ContentSource       @default(HUMAN)
+  published     Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  segments      TranscriptSegment[]
+  questions     Question[]
+  words         ListeningWord[]
+  attempts      Attempt[]
+  mockExamParts MockExamPart[]
+
+  @@index([level, published])
+}
+
+model TranscriptSegment {
+  id         String            @id @default(cuid())
+  exerciseId String
+  exercise   ListeningExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  order      Int
+  speaker    String?
+  text       String
+  startMs    Int?
+  endMs      Int?
+
+  @@index([exerciseId, order])
+}
+
+model ListeningWord {
+  exerciseId String
+  wordId     String
+  exercise   ListeningExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  word       VocabularyWord    @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@id([exerciseId, wordId])
+}
+
+/// External podcast (we only link out; no audio is redistributed).
+model Podcast {
+  id             String           @id @default(cuid())
+  slug           String           @unique
+  title          String
+  publisher      String?
+  description    String
+  url            String
+  levelMin       CefrLevel
+  levelMax       CefrLevel
+  topics         String[]
+  hasTranscripts Boolean          @default(false)
+  learningTips   String?
+  episodes       PodcastEpisode[]
+}
+
+model PodcastEpisode {
+  id                    String     @id @default(cuid())
+  podcastId             String
+  podcast               Podcast    @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+  title                 String
+  url                   String
+  description           String?
+  level                 CefrLevel?
+  topic                 String?
+  /// Only set where a transcript is legally available from the publisher.
+  transcriptUrl         String?
+  recommendedVocabulary String[]
+
+  @@index([podcastId])
+}
+
+/// Film/TV/video recommendation, linked to legitimate providers.
+model MediaRecommendation {
+  id               String          @id @default(cuid())
+  slug             String          @unique
+  title            String
+  kind             MediaKind
+  genre            String
+  levelMin         CefrLevel
+  levelMax         CefrLevel
+  /// 1 (very accessible) – 5 (very demanding vocabulary/speed).
+  vocabDifficulty  Int
+  description      String
+  dutchSubtitles   Boolean         @default(false)
+  englishSubtitles Boolean         @default(false)
+  learningTips     String
+  providers        WatchProvider[]
+}
+
+model WatchProvider {
+  id      String              @id @default(cuid())
+  mediaId String
+  media   MediaRecommendation @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  name    String
+  url     String
+  /// e.g. "Free", "Subscription"
+  access  String?
+
+  @@index([mediaId])
+}
+
+// ─────────────────────────────── Grammar ───────────────────────────────
+
+model GrammarTopic {
+  id             String                 @id @default(cuid())
+  slug           String                 @unique
+  title          String
+  area           GrammarArea
+  level          CefrLevel
+  summary        String
+  /// Markdown, English explanation with Dutch examples.
+  explanation    String
+  order          Int                    @default(0)
+  /// Mistake categories this topic remedies (used for recommendations).
+  remedies       ErrorCategory[]
+  source         ContentSource          @default(HUMAN)
+  published      Boolean                @default(true)
+  examples       GrammarExample[]
+  commonMistakes GrammarCommonMistake[]
+  questions      Question[]
+  words          GrammarTopicWord[]
+  attempts       Attempt[]
+
+  @@index([area, level])
+}
+
+model GrammarExample {
+  id      String       @id @default(cuid())
+  topicId String
+  topic   GrammarTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  dutch   String
+  english String
+  note    String?
+  order   Int          @default(0)
+
+  @@index([topicId])
+}
+
+model GrammarCommonMistake {
+  id          String       @id @default(cuid())
+  topicId     String
+  topic       GrammarTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  wrong       String
+  correct     String
+  explanation String
+
+  @@index([topicId])
+}
+
+model GrammarTopicWord {
+  topicId String
+  wordId  String
+  topic   GrammarTopic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  word    VocabularyWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@id([topicId, wordId])
+}
+
+// ─────────────────────────────── Speaking ───────────────────────────────
+
+model Conversation {
+  id          String                @id @default(cuid())
+  userId      String
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenario    ConversationScenario
+  level       CefrLevel
+  title       String
+  startedAt   DateTime              @default(now())
+  endedAt     DateTime?
+  /// When set, the transcript is purged after this date (privacy retention).
+  retainUntil DateTime?
+  messages    ConversationMessage[]
+  feedback    SpeakingFeedback?
+
+  @@index([userId, startedAt])
+}
+
+model ConversationMessage {
+  id             String               @id @default(cuid())
+  conversationId String
+  conversation   Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String
+  /// English explanation when the learner asked for help.
+  english        String?
+  inputMode      InputMode            @default(TEXT)
+  createdAt      DateTime             @default(now())
+  corrections    SpeakingCorrection[]
+
+  @@index([conversationId, createdAt])
+}
+
+model SpeakingCorrection {
+  id          String              @id @default(cuid())
+  messageId   String
+  message     ConversationMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  original    String
+  corrected   String
+  category    ErrorCategory
+  explanation String
+}
+
+/// Post-conversation report. Scores are 1–5 practice estimates, not CEFR grades.
+model SpeakingFeedback {
+  id               String       @id @default(cuid())
+  conversationId   String       @unique
+  conversation     Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  grammarScore     Int
+  grammarNote      String
+  vocabularyScore  Int
+  vocabularyNote   String
+  fluencyScore     Int
+  fluencyNote      String
+  accuracyScore    Int
+  accuracyNote     String
+  naturalnessScore Int
+  naturalnessNote  String
+  summary          String
+  newVocabulary    String[]
+  createdAt        DateTime     @default(now())
+}
+
+// ─────────────────────────────── Writing ───────────────────────────────
+
+model WritingPrompt {
+  id           String              @id @default(cuid())
+  slug         String              @unique
+  title        String
+  level        CefrLevel
+  taskType     WritingTaskType
+  register     Register
+  instructions String
+  minWords     Int
+  maxWords     Int
+  isNt2        Boolean             @default(false)
+  submissions  WritingSubmission[]
+}
+
+model WritingSubmission {
+  id              String              @id @default(cuid())
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promptId        String?
+  prompt          WritingPrompt?      @relation(fields: [promptId], references: [id], onDelete: SetNull)
+  /// Free-writing task description when no prompt is used.
+  taskDescription String?
+  text            String
+  wordCount       Int
+  createdAt       DateTime            @default(now())
+  feedback        WritingFeedback?
+  corrections     WritingCorrection[]
+
+  @@index([userId, createdAt])
+}
+
+/// Scores are 1–5 practice estimates.
+model WritingFeedback {
+  id               String            @id @default(cuid())
+  submissionId     String            @unique
+  submission       WritingSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  grammarScore     Int
+  vocabularyScore  Int
+  structureScore   Int
+  registerScore    Int
+  coherenceScore   Int
+  taskScore        Int
+  summary          String
+  improvedVersion  String
+  usefulVocabulary String[]
+  createdAt        DateTime          @default(now())
+}
+
+model WritingCorrection {
+  id           String            @id @default(cuid())
+  submissionId String
+  submission   WritingSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  original     String
+  corrected    String
+  category     ErrorCategory
+  explanation  String
+  order        Int               @default(0)
+
+  @@index([submissionId])
+}
+
+// ─────────────────────────── Mistake tracker ───────────────────────────
+
+/// One occurrence of a mistake, from any skill. Aggregated by category on the
+/// "My Mistakes" page.
+model UserMistake {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source      MistakeSource
+  category    ErrorCategory
+  original    String
+  corrected   String
+  explanation String?
+  level       CefrLevel?
+  /// Optional pointer back to where it happened (conversation, submission, …).
+  sourceRef   String?
+  createdAt   DateTime      @default(now())
+
+  @@index([userId, category, createdAt])
+  @@index([userId, createdAt])
+}
+
+// ─────────────────────────────── NT2 ───────────────────────────────
+
+model MockExam {
+  id              String         @id @default(cuid())
+  slug            String         @unique
+  title           String
+  program         Nt2Program
+  skill           Skill
+  level           CefrLevel
+  description     String
+  durationMinutes Int
+  /// Practice pass mark in percent (an estimate, not an official norm).
+  passPercent     Int            @default(60)
+  published       Boolean        @default(true)
+  parts           MockExamPart[]
+  attempts        Attempt[]
+}
+
+model MockExamPart {
+  id                  String             @id @default(cuid())
+  examId              String
+  exam                MockExam           @relation(fields: [examId], references: [id], onDelete: Cascade)
+  order               Int
+  instructions        String
+  readingExerciseId   String?
+  readingExercise     ReadingExercise?   @relation(fields: [readingExerciseId], references: [id], onDelete: SetNull)
+  listeningExerciseId String?
+  listeningExercise   ListeningExercise? @relation(fields: [listeningExerciseId], references: [id], onDelete: SetNull)
+  questions           Question[]
+
+  @@index([examId, order])
+}
+
+// ─────────────────────────── Progress & motivation ───────────────────────────
+
+model StudySession {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill       Skill
+  activity    String
+  durationSec Int
+  xp          Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// Per-day rollup used for streaks and daily goals. `date` is the learner's local date.
+model DailyActivity {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  minutes   Int      @default(0)
+  xp        Int      @default(0)
+  reviews   Int      @default(0)
+  exercises Int      @default(0)
+
+  @@id([userId, date])
+}
+
+model Achievement {
+  id          String            @id @default(cuid())
+  code        String            @unique
+  title       String
+  description String
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  userId        String
+  achievementId String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  earnedAt      DateTime    @default(now())
+
+  @@id([userId, achievementId])
+}
+
+// ─────────────────────────────── Blog ───────────────────────────────
+
+model BlogCategory {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  name        String
+  description String?
+  order       Int        @default(0)
+  posts       BlogPost[]
+}
+
+model BlogPost {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  excerpt        String
+  /// Markdown.
+  body           String
+  categoryId     String
+  category       BlogCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  level          CefrLevel?
+  authorId       String?
+  author         User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorName     String        @default("Redactie")
+  status         PostStatus    @default(DRAFT)
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  readingMinutes Int           @default(3)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  tags           BlogPostTag[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId])
+}
+
+model BlogTag {
+  id    String        @id @default(cuid())
+  slug  String        @unique
+  name  String
+  posts BlogPostTag[]
+}
+
+model BlogPostTag {
+  postId String
+  tagId  String
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+}

@@ -9,11 +9,17 @@ import { hashPassword } from "../src/lib/auth/password";
 async function main() {
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
-  if (!email || !password) return;
+  if (!email || !password) {
+    console.log(`Admin account not created: ${!email ? "ADMIN_EMAIL" : "ADMIN_PASSWORD"} is not set for this build.`);
+    return;
+  }
   if (password.length < 8) throw new Error("ADMIN_PASSWORD must be at least 8 characters.");
   const db = new PrismaClient();
   try {
-    if (await db.user.findUnique({ where: { email }, select: { id: true } })) return;
+    if (await db.user.findUnique({ where: { email }, select: { id: true } })) {
+      console.log(`Admin account ${email} already exists; left unchanged.`);
+      return;
+    }
     await db.user.create({
       data: {
         id: randomUUID(), name: "Admin", email, emailVerified: true, role: "ADMIN",

@@ -22,6 +22,8 @@ names the main files touched.
   Local development now needs a Postgres `DATABASE_URL` too. `prisma/dev.db` is no longer used by the app.
 
 ### Fixed
+- The admin bootstrap now logs why it did nothing (missing `ADMIN_EMAIL`/`ADMIN_PASSWORD`, or account already exists)
+  instead of exiting silently (`scripts/bootstrap-admin.ts`).
 - `prisma/production-seed.db` contained leftover rows of a throwaway test account (session/account) and orphaned
   questions/transcript segments of deleted private listening items; removed.
 

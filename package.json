@@ -1,0 +1,60 @@
+{
+  "name": "dutch-learning-website",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:seed:nt2": "tsx prisma/seed/nt2.ts",
+    "db:seed:words": "tsx prisma/seed/nt2-words-seed.ts",
+    "db:seed:grammar": "tsx prisma/seed/grammar-only.ts",
+    "db:seed:media": "tsx prisma/seed/media-only.ts",
+    "db:build:production": "tsx scripts/build-production-db.ts",
+    "user:create": "tsx scripts/create-user.ts",
+    "db:reset": "prisma migrate reset --force",
+    "postinstall": "prisma generate",
+    "db:build:dictionary": "tsx prisma/seed/dictionary-build.ts",
+    "db:build:dictionary:vi": "tsx prisma/seed/dictionary-build-vi.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "@prisma/client": "^6.19.3",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.49.0",
+    "next": "16.3.8",
+    "papaparse": "^5.7.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "server-only": "^0.0.1",
+    "ts-fsrs": "^5.4.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22.20.4",
+    "@types/papaparse": "^5.5.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.8",
+    "prisma": "^6.19.3",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed/index.ts"
+  }
+}

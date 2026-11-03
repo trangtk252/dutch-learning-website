@@ -2,9 +2,13 @@
   "name": "dutch-learning-website",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "vercel-build": "prisma migrate deploy && tsx scripts/copy-sqlite-to-postgres.ts --if-empty && tsx scripts/bootstrap-admin.ts && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
@@ -17,7 +21,7 @@
     "db:seed:words": "tsx prisma/seed/nt2-words-seed.ts",
     "db:seed:grammar": "tsx prisma/seed/grammar-only.ts",
     "db:seed:media": "tsx prisma/seed/media-only.ts",
-    "db:build:production": "tsx scripts/build-production-db.ts",
+    "db:copy-seed": "tsx scripts/copy-sqlite-to-postgres.ts",
     "user:create": "tsx scripts/create-user.ts",
     "db:reset": "prisma migrate reset --force",
     "postinstall": "prisma generate",

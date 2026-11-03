@@ -24,9 +24,9 @@ export function buildVocabWhere(userId: string, f: VocabFilters, timeZone: strin
   const word: Prisma.VocabularyWordWhereInput = {};
   if (f.q) {
     where.OR = [
-      { word: { lemma: { contains: f.q } } },
-      { word: { english: { contains: f.q } } },
-      { personalNote: { contains: f.q } },
+      { word: { lemma: { contains: f.q, mode: "insensitive" } } },
+      { word: { english: { contains: f.q, mode: "insensitive" } } },
+      { personalNote: { contains: f.q, mode: "insensitive" } },
     ];
   }
   if (f.level) word.cefrLevel = f.level;

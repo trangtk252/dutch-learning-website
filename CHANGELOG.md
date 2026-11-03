@@ -9,7 +9,31 @@ names the main files touched.
 
 ## 2026-11-03
 
+### Changed
+- Database moved from a local SQLite file to Postgres so the app can run on Vercel (which has no persistent disk;
+  the build failed with "DATABASE_URL: expected string, received undefined"). Schema provider is now
+  `postgresql` (with the Vercel `rhel-openssl-3.0.x` engine), one fresh migration `20261103000000_init_postgres`
+  replaces the SQLite ones (kept in `prisma/_sqlite_migrations_backup/`); search is case-insensitive via
+  `mode: "insensitive"` (`prisma/schema.prisma`, `prisma/migrations/`, `search/page.tsx`, `lib/server/vocab-query.ts`).
+- Vercel build: `vercel-build` runs `prisma migrate deploy`, loads the shared content when the database is empty,
+  creates the admin from `ADMIN_EMAIL`/`ADMIN_PASSWORD`, then `next build`; `next.config.ts` ships
+  `prisma/dictionary.db` with the server functions; `engines.node >= 22.13` (`package.json`).
+- `DEPLOY.md` rewritten for Vercel + Neon; `README.md` and `.env.example` updated (Postgres `DATABASE_URL`).
+  Local development now needs a Postgres `DATABASE_URL` too. `prisma/dev.db` is no longer used by the app.
+
+### Fixed
+- `prisma/production-seed.db` contained leftover rows of a throwaway test account (session/account) and orphaned
+  questions/transcript segments of deleted private listening items; removed.
+
+### Removed
+- Railway/Docker deployment files (`Dockerfile`, `.dockerignore`, `scripts/start.sh`) and
+  `scripts/build-production-db.ts` (`db:build:production`); `production-seed.db` stays as the shared-content source.
+
 ### Added
+- `npm run db:copy-seed` (`scripts/copy-sqlite-to-postgres.ts`): copies a SQLite file into Postgres (default
+  `prisma/production-seed.db`; pass `prisma/dev.db` to move your own data). Skips existing and orphaned rows.
+- The project is now a git repo, pushed to https://github.com/trangtk252/dutch-learning-website (branch `main`).
+  The earlier "there is no git" note no longer applies. `.env`, `dev.db` and backups are not uploaded.
 - Real accounts so a small group can test the app, each with their own data: sign up (with an invite code) and log
   in with email + password at `/signup` and `/login`; 30-day sessions stored in the existing `Session` table (the
   cookie holds a random token, the DB only its hash); passwords hashed with Node's built-in `scrypt` (no new
@@ -45,6 +69,7 @@ names the main files touched.
   "You start over with a fresh profile" (`settings/actions.ts`, `settings/forms.tsx`, `vi/account.ts`).
 
 ### Fixed
+- `.gitignore` now also excludes `prisma/*.backup-*` (personal data copies) and `prisma/dictionary-source/` (`.gitignore`).
 - `.gitignore` excluded `prisma/*.db`, so a Railway upload would have skipped the dictionary and the seed database; the two
   files the app needs (`dictionary.db`, `production-seed.db`) are now allowed (`.gitignore`).
 

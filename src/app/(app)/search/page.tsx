@@ -29,7 +29,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   const t = await getT();
   const { q: raw } = await searchParams;
   const q = typeof raw === "string" ? raw.trim().slice(0, 80) : "";
-  const ci = { contains: q }; // SQLite LIKE is case-insensitive for ASCII
+  const ci = { contains: q, mode: "insensitive" as const };
 
   const results = q.length >= 2
     ? await Promise.all([

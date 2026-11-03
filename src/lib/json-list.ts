@@ -1,5 +1,5 @@
 /**
- * SQLite has no scalar lists, so string/enum lists are stored as JSON arrays.
+ * String/enum lists are stored as JSON arrays (the schema has no scalar lists).
  * Reads a JSON column back as a typed string list (anything else → []).
  */
 export function jsonList<T extends string = string>(value: unknown): T[] {

@@ -10,7 +10,7 @@ It combines spaced-repetition vocabulary, an AI speaking partner, listening and 
 
 ## Quick start
 
-Requirements: Node.js 20.9+. The database is a local SQLite file (`prisma/dev.db`) — no server needed.
+Requirements: Node.js 22.13+ and a Postgres database (a free Neon database works; put its URL in `DATABASE_URL`). To publish the app see `DEPLOY.md`.
 
 ```bash
 cp .env.example .env
@@ -43,7 +43,7 @@ The app runs fully **offline by default** (`AI_PROVIDER=mock`): AI features fall
 |---|---|
 | Framework | Next.js 16 (App Router, Server Components, Server Actions) + TypeScript |
 | UI | Tailwind CSS v4 with design tokens (light/dark), lucide icons, accessible custom components |
-| Database | SQLite via Prisma 6 |
+| Database | Postgres via Prisma 6 |
 | Auth | None — single local learner (`src/lib/session.ts`) |
 | Validation | Zod (forms, server actions, AI output, environment) |
 | SRS | FSRS via `ts-fsrs` |

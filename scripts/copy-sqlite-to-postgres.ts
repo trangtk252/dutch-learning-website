@@ -70,6 +70,7 @@ async function main() {
   const orphans = new Set(
     (src.prepare("PRAGMA foreign_key_check").all() as { table: string; rowid: number }[]).map((r) => `${r.table}:${r.rowid}`),
   );
+  const dropped = new Map<string, Set<string>>(); // model name -> ids of rows not copied
   const db = new PrismaClient();
   try {
     if (ifEmpty && (await db.vocabularyWord.count()) > 0) {
@@ -81,8 +82,16 @@ async function main() {
       if (!tables.has(table)) continue;
       const fields = model.fields.filter((f) => f.kind !== "object");
       const all = src.prepare(`SELECT rowid AS "__rowid", * FROM "${table}"`).all() as Record<string, unknown>[];
-      const rows = all.filter((r) => !orphans.has(`${table}:${r.__rowid}`));
-      if (rows.length < all.length) console.warn(`${model.name}: skipping ${all.length - rows.length} orphaned row(s)`);
+      // Also drop rows whose parent was dropped above (e.g. answer options of an orphaned question).
+      const parents = model.fields
+        .filter((f) => f.kind === "object" && f.relationFromFields?.length === 1 && dropped.has(f.type))
+        .map((f) => ({ col: model.fields.find((x) => x.name === f.relationFromFields![0])!.dbName ?? f.relationFromFields![0], ids: dropped.get(f.type)! }));
+      const rows = all.filter((r) => !orphans.has(`${table}:${r.__rowid}`) && !parents.some((p) => p.ids.has(r[p.col] as string)));
+      if (rows.length < all.length) {
+        console.warn(`${model.name}: skipping ${all.length - rows.length} orphaned row(s)`);
+        const keep = new Set(rows);
+        dropped.set(model.name, new Set(all.filter((r) => !keep.has(r)).map((r) => r.id as string)));
+      }
       if (!rows.length) continue;
       const delegate = (db as unknown as Record<string, { createMany(args: unknown): Promise<{ count: number }> }>)[
         model.name[0].toLowerCase() + model.name.slice(1)

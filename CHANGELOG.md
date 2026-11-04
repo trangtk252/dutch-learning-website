@@ -7,6 +7,16 @@ Format: one section per day (`## YYYY-MM-DD`), grouped under
 **Added / Changed / Fixed / Removed**. Each entry says what changed and
 names the main files touched.
 
+## 2026-11-04
+
+### Fixed
+- `db:copy-seed` failed on `AnswerOption_questionId_fkey` when copying `dev.db`: rows whose parent was skipped as
+  orphaned (e.g. answer options of an orphaned question) are now skipped too (`scripts/copy-sqlite-to-postgres.ts`).
+
+### Changed
+- Copied the local `dev.db` data (learner "Michelle", 286 cards, 692 reviews) into the Neon Postgres database used
+  by Vercel and set a password for `demo@example.com` with `user:create`.
+
 ## 2026-11-03
 
 ### Changed

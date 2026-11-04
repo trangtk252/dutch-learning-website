@@ -22,6 +22,8 @@ names the main files touched.
   orphaned (e.g. answer options of an orphaned question) are now skipped too (`scripts/copy-sqlite-to-postgres.ts`).
 
 ### Changed
+- Deleted one learner account (forgot password, no data yet) from the Neon database so the person can sign up again
+  with the invite code. One-off script, not kept.
 - Reset the password of the admin account (`ADMIN_EMAIL`) in the Neon database with `user:create ... admin`, so it can open `/admin/users`.
 - Copied the local `dev.db` data (learner "Michelle", 286 cards, 692 reviews) into the Neon Postgres database used
   by Vercel and set a password for `demo@example.com` with `user:create`.

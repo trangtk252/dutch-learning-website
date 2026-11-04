@@ -10,6 +10,12 @@ names the main files touched.
 ## 2026-11-04
 
 ### Added
+- Landing page at `/` for first-time visitors: what the site is for (a personal Dutch notebook plus self-study
+  platform), a sample notebook entry, the three ideas (notebook, study plan, mistakes), the skills and tools, how it
+  works, and sign-up / log-in buttons. Signed-in learners still go straight to `/dashboard`
+  (`src/app/(public)/page.tsx`). Vietnamese strings in `lib/i18n/dictionaries/vi/landing.ts` (registered in `vi/index.ts`).
+
+### Added
 - Show/hide password eye button inside the password field on log in and sign up (`src/app/(public)/auth-form.tsx`,
   Vietnamese strings in `lib/i18n/dictionaries/vi/account.ts`).
 

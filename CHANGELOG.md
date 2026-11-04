@@ -9,6 +9,10 @@ names the main files touched.
 
 ## 2026-11-04
 
+### Added
+- Admin-only page `/admin/users` listing registered accounts (name, email, role, joined, flashcard count) with a
+  total count; not linked in the nav, other users are sent to the dashboard (`src/app/(app)/admin/users/page.tsx`).
+
 ### Fixed
 - `db:copy-seed` failed on `AnswerOption_questionId_fkey` when copying `dev.db`: rows whose parent was skipped as
   orphaned (e.g. answer options of an orphaned question) are now skipped too (`scripts/copy-sqlite-to-postgres.ts`).

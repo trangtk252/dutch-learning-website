@@ -1,12 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, FormError, Input } from "@/components/ui/form";
 import { useT } from "@/lib/i18n/client";
 import { loginAction, signupAction } from "./auth-actions";
+
+function PasswordInput(props: { autoComplete: string; minLength?: number }) {
+  const t = useT();
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="relative">
+      <Input id="password" name="password" type={visible ? "text" : "password"} className="pr-10" required {...props} />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        aria-label={visible ? t("Hide password") : t("Show password")}
+        aria-pressed={visible}
+        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted hover:text-ink"
+      >
+        {visible ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+      </button>
+    </div>
+  );
+}
 
 export function LoginForm() {
   const t = useT();
@@ -19,7 +39,7 @@ export function LoginForm() {
           <Input id="email" name="email" type="email" autoComplete="email" required />
         </Field>
         <Field id="password" label={t("Password")}>
-          <Input id="password" name="password" type="password" autoComplete="current-password" required />
+          <PasswordInput autoComplete="current-password" />
         </Field>
         <FormError message={state?.error} />
         <Button type="submit" disabled={pending}>{t("Log in")}</Button>
@@ -49,7 +69,7 @@ export function SignupForm() {
           <Input id="email" name="email" type="email" autoComplete="email" required />
         </Field>
         <Field id="password" label={t("Password")} hint={t("At least 8 characters.")}>
-          <Input id="password" name="password" type="password" autoComplete="new-password" minLength={8} required />
+          <PasswordInput autoComplete="new-password" minLength={8} />
         </Field>
         <FormError message={state?.error} />
         <Button type="submit" disabled={pending}>{t("Create account")}</Button>

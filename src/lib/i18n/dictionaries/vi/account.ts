@@ -78,7 +78,7 @@ export const account: Dictionary = {
   "Try a different spelling, or add it as a new word from the Vocabulary page.": "Thử cách viết khác, hoặc thêm làm từ mới từ trang Từ vựng.", "In your deck": "Đã có trong bộ thẻ",
   "Example sentences": "Câu ví dụ", "Your mistakes": "Lỗi của bạn",
   // Log in / sign up
-  "Log in": "Đăng nhập", "Log out": "Đăng xuất", "Email": "Email", "Password": "Mật khẩu", "Have an invite code?": "Bạn có mã mời?",
+  "Log in": "Đăng nhập", "Log out": "Đăng xuất", "Email": "Email", "Password": "Mật khẩu", "Show password": "Hiện mật khẩu", "Hide password": "Ẩn mật khẩu", "Have an invite code?": "Bạn có mã mời?",
   "Create an account": "Tạo tài khoản", "Create account": "Tạo tài khoản", "Invite code": "Mã mời", "At least 8 characters.": "Ít nhất 8 ký tự.",
   "Already have an account?": "Đã có tài khoản?", "Enter your email and password.": "Nhập email và mật khẩu của bạn.",
   "Too many attempts. Wait a few minutes and try again.": "Thử quá nhiều lần. Hãy đợi vài phút rồi thử lại.",

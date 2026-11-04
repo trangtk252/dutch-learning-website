@@ -10,6 +10,10 @@ names the main files touched.
 ## 2026-11-04
 
 ### Added
+- Show/hide password eye button inside the password field on log in and sign up (`src/app/(public)/auth-form.tsx`,
+  Vietnamese strings in `lib/i18n/dictionaries/vi/account.ts`).
+
+### Added
 - Admin-only page `/admin/users` listing registered accounts (name, email, role, joined, flashcard count) with a
   total count; not linked in the nav, other users are sent to the dashboard (`src/app/(app)/admin/users/page.tsx`).
 
@@ -18,6 +22,7 @@ names the main files touched.
   orphaned (e.g. answer options of an orphaned question) are now skipped too (`scripts/copy-sqlite-to-postgres.ts`).
 
 ### Changed
+- Reset the password of the admin account (`ADMIN_EMAIL`) in the Neon database with `user:create ... admin`, so it can open `/admin/users`.
 - Copied the local `dev.db` data (learner "Michelle", 286 cards, 692 reviews) into the Neon Postgres database used
   by Vercel and set a password for `demo@example.com` with `user:create`.
 
